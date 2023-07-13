@@ -1,11 +1,8 @@
 package com.techsolutio.teste.infra.http;
 
 import com.techsolutio.teste.domain.ProdutoMongo;
-import com.techsolutio.teste.domain.ProdutoMySql;
 import com.techsolutio.teste.infra.http.dto.*;
 import com.techsolutio.teste.infra.http.mapper.*;
-import com.techsolutio.teste.infra.mongo.ProdutoMongoRepository;
-import com.techsolutio.teste.infra.mysql.ProdutoMySqlRepository;
 import com.techsolutio.teste.service.ProdutoMongoService;
 import com.techsolutio.teste.service.ProdutoMySqlService;
 import com.techsolutio.teste.service.UsuarioMongoService;

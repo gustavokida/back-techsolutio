@@ -4,8 +4,10 @@ import com.techsolutio.teste.domain.ProdutoMongo;
 import com.techsolutio.teste.domain.ProdutoMySql;
 import com.techsolutio.teste.infra.http.dto.EditarProdutoDto;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
+@Component
 public class EditarProdutoMapper {
     public ProdutoMongo mapMongo(EditarProdutoDto editarProdutoDto){
         return ProdutoMongo.builder()
