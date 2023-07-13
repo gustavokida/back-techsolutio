@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface ProdutoMySqlRepository extends CrudRepository<ProdutoMySql, Long> {
     @Transactional
     void deleteByIdMongo(String id);
+
+    ProdutoMySql findByIdMongo(String id);
 }

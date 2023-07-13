@@ -1,15 +1,14 @@
 package com.techsolutio.teste.infra.http.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
-@Builder
-public class UsuarioDto {
-    private String username;
-    private String password;
+public class CadastrarProdutoDto {
+    private String nomeProduto;
+    private String fornecedor;
+    private Double valorProduto;
 }

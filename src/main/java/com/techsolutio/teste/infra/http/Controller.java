@@ -2,11 +2,13 @@ package com.techsolutio.teste.infra.http;
 
 import com.techsolutio.teste.domain.ProdutoMongo;
 import com.techsolutio.teste.domain.ProdutoMySql;
-import com.techsolutio.teste.domain.Usuario;
 import com.techsolutio.teste.infra.http.dto.*;
+import com.techsolutio.teste.infra.http.mapper.*;
 import com.techsolutio.teste.infra.mongo.ProdutoMongoRepository;
-import com.techsolutio.teste.infra.mongo.UsuarioRepository;
 import com.techsolutio.teste.infra.mysql.ProdutoMySqlRepository;
+import com.techsolutio.teste.service.ProdutoMongoService;
+import com.techsolutio.teste.service.ProdutoMySqlService;
+import com.techsolutio.teste.service.UsuarioMongoService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +22,21 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api")
 public class Controller {
-    private final UsuarioRepository usuarioRepository;
-    private final ProdutoMongoRepository produtoMongoRepository;
-    private final ProdutoMySqlRepository produtoMySqlRepository;
+    private final UsuarioMongoService usuarioMongoService;
+    private final ProdutoMongoService produtoMongoService;
+    private final ProdutoMySqlService produtoMySqlService;
+    private final CriarUsuarioMapper criarUsuarioMapper;
+    private final LoginRequestMapper loginRequestMapper;
+    private final LoginResponseMapper loginResponseMapper;
+    private final CadastrarProdutoMapper cadastrarProdutoMapper;
+    private final CadastroResponseMapper cadastroResponseMapper;
+    private final EditarProdutoMapper editarProdutoMapper;
+    private final DeleteResponseMapper deleteResponseMapper;
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestDto loginRequestDto) throws LoginException {
-        var usuario = buscaUsuario(loginRequestDto);
-        var retorno = LoginResponse.builder()
-                .id(usuario.getId())
-                .build();
+        var usuarioMapped = loginRequestMapper.map(loginRequestDto);
+        var usuario = usuarioMongoService.buscarUsuario(usuarioMapped);
+        var retorno = loginResponseMapper.map(usuario);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retorno);
     }
     @PostMapping("/logout")
@@ -39,81 +47,41 @@ public class Controller {
                     .build());
     }
     @PostMapping("/criar-usuario")
-    public ResponseEntity<Usuario> criarUsuario(@RequestBody UsuarioDto usuarioDto){
-        var usuario = Usuario.builder()
-                .password(usuarioDto.getPassword())
-                .username(usuarioDto.getUsername())
-                .build();
-        var retorno = usuarioRepository.save(usuario);
+    public ResponseEntity<LoginResponse> criarUsuario(@RequestBody CriarUsuarioDto criarUsuarioDto){
+        var usuario = criarUsuarioMapper.map(criarUsuarioDto);
+        var retornoNovoUsuario = usuarioMongoService.salvarUsuario(usuario);
+        var retorno = loginResponseMapper.map(retornoNovoUsuario);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retorno);
     }
     @PostMapping("/cadastro")
-    public ResponseEntity<CadastroResponse> cadastro(@RequestBody ProdutoDto produtoDto){
-        var produtoMongo = salvarProdutoMongo(produtoDto);
-        salvarProdutoMySql(produtoDto, produtoMongo);
+    public ResponseEntity<CadastroResponse> cadastro(@RequestBody CadastrarProdutoDto cadastrarProdutoDto){
+        var produtoMongoMapped = cadastrarProdutoMapper.mapMongo(cadastrarProdutoDto);
+        var produtoMongo = produtoMongoService.salvarProdutoMongo(produtoMongoMapped);
+        var produtoMySqlMapped = cadastrarProdutoMapper.mapMySql(produtoMongo);
+        produtoMySqlService.salvarProdutoMySql(produtoMySqlMapped);
 
-        var retorno = CadastroResponse.builder()
-                .id(produtoMongo.getId())
-                .build();
+        var retorno = cadastroResponseMapper.map(produtoMongo);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retorno);
     }
     @GetMapping("/cadastro")
     public ResponseEntity<List<ProdutoMongo>> buscarProdutos(){
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(produtoMongoRepository.findAll());
+        var produtos = produtoMongoService.buscarTodosProdutos();
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(produtos);
     }
     @PutMapping("/cadastro")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResponseEntity<ProdutoMongo> editarProduto(@RequestBody ProdutoDto produtoDto){
-        var produto = ProdutoMongo.builder()
-                .id(produtoDto.getIdMongo())
-                .nomeProduto(produtoDto.getNomeProduto())
-                .fornecedor(produtoDto.getFornecedor())
-                .valorProduto(produtoDto.getValorProduto())
-                .build();
-        var retorno = produtoMongoRepository.save(produto);
-        var produtoMySql = ProdutoMySql.builder()
-                    .id(produtoDto.getId())
-                    .idMongo(produtoDto.getIdMongo())
-                    .nomeProduto(produtoDto.getNomeProduto())
-                    .valorProduto(produtoDto.getValorProduto())
-                    .fornecedor(produtoDto.getFornecedor())
-                    .build();
-        produtoMySqlRepository.save(produtoMySql);
+    public ResponseEntity<ProdutoMongo> editarProduto(@RequestBody EditarProdutoDto editarProdutoDto){
+        var produto = editarProdutoMapper.mapMongo(editarProdutoDto);
+        var retorno = produtoMongoService.editarProdutoMongo(produto);
+        var produtoMySql = editarProdutoMapper.mapMySql(editarProdutoDto);
+        produtoMySqlService.editarProdutoMySql(produtoMySql);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retorno);
     }
-    @DeleteMapping("/cadastro/{idMongo}")
-    public ResponseEntity<DeleteResponse> removerProduto(@PathVariable(value = "idMongo") final String id){
-        produtoMongoRepository.deleteById(id);
-        produtoMySqlRepository.deleteByIdMongo(id);
-        var retorno = DeleteResponse.builder()
-                .message("Produto com id " + id + "deletado com sucesso!")
-                .build();
-
+    @DeleteMapping("/cadastro/{id}")
+    public ResponseEntity<DeleteResponse> removerProduto(@PathVariable(value = "id") final String id){
+        produtoMongoService.deletarProduto(id);
+        produtoMySqlService.deletarProduto(id);
+        var retorno = deleteResponseMapper.map(id);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(retorno);
-    }
-
-    private Usuario buscaUsuario(LoginRequestDto loginRequestDto) throws LoginException {
-        return usuarioRepository
-                .findByUsernameAndPassword(loginRequestDto.getUsername(), loginRequestDto.getPassword())
-                .orElseThrow(LoginException::new);
-    }
-
-    private ProdutoMongo salvarProdutoMongo(ProdutoDto produtoDto){
-        var produto = ProdutoMongo.builder()
-                .nomeProduto(produtoDto.getNomeProduto())
-                .fornecedor(produtoDto.getFornecedor())
-                .valorProduto(produtoDto.getValorProduto())
-                .build();
-        return produtoMongoRepository.save(produto);
-    }
-    private void salvarProdutoMySql(ProdutoDto produtoDto, ProdutoMongo produtoMongo){
-        var produto = ProdutoMySql.builder()
-                .idMongo(produtoMongo.getId())
-                .nomeProduto(produtoDto.getNomeProduto())
-                .fornecedor(produtoDto.getFornecedor())
-                .valorProduto(produtoDto.getValorProduto())
-                .build();
-        produtoMySqlRepository.save(produto);
     }
 
 }

@@ -7,9 +7,9 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class ProdutoDto {
-    private Long id;
-    private String idMongo;
+public class EditarProdutoDto {
+    private String id;
+    private Long idMySql;
     private String nomeProduto;
     private String fornecedor;
     private Double valorProduto;
