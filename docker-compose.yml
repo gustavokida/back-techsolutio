@@ -1,0 +1,36 @@
+version: '3'
+
+volumes:
+  mongo_data:
+    driver: local
+  db_data:
+    driver: local
+
+services:
+  mongo:
+    image: mongo:3.6
+    restart: always
+    networks:
+      - default
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: teste-tech-solutio
+    command: mongod --auth
+  mysql:
+    image: mysql:8.0
+    restart: always
+    volumes:
+      - .docker/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: 'db'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      - '3306:3306'
