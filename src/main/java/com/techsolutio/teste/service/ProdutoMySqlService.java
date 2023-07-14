@@ -1,6 +1,5 @@
 package com.techsolutio.teste.service;
 
-import com.techsolutio.teste.domain.ProdutoMongo;
 import com.techsolutio.teste.domain.ProdutoMySql;
 import com.techsolutio.teste.infra.mysql.ProdutoMySqlRepository;
 import lombok.AllArgsConstructor;

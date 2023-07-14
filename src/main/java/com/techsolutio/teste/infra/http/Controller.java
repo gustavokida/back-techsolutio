@@ -31,6 +31,9 @@ public class Controller {
     private final DeleteResponseMapper deleteResponseMapper;
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestDto loginRequestDto) throws LoginException {
+        if(loginRequestDto.getPassword().isEmpty() || loginRequestDto.getUsername().isEmpty()){
+            throw new LoginException();
+        }
         var usuarioMapped = loginRequestMapper.map(loginRequestDto);
         var usuario = usuarioMongoService.buscarUsuario(usuarioMapped);
         var retorno = loginResponseMapper.map(usuario);
@@ -44,7 +47,10 @@ public class Controller {
                     .build());
     }
     @PostMapping("/criar-usuario")
-    public ResponseEntity<LoginResponse> criarUsuario(@RequestBody CriarUsuarioDto criarUsuarioDto){
+    public ResponseEntity<LoginResponse> criarUsuario(@RequestBody CriarUsuarioDto criarUsuarioDto) throws LoginException {
+        if(criarUsuarioDto.getPassword().isEmpty() || criarUsuarioDto.getUsername().isEmpty()){
+            throw new LoginException();
+        }
         var usuario = criarUsuarioMapper.map(criarUsuarioDto);
         var retornoNovoUsuario = usuarioMongoService.salvarUsuario(usuario);
         var retorno = loginResponseMapper.map(retornoNovoUsuario);
